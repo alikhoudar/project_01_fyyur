@@ -1,22 +1,59 @@
 from datetime import datetime
 from flask_wtf import Form
-from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms import (StringField, SelectField, SelectMultipleField, 
+DateTimeField, BooleanField)
+from wtforms.validators import DataRequired, AnyOf, URL, Regexp
+import re
+
+
+
+def valid_phone(number):
+    """Validate phone numbers like:
+    1234567890 - no space
+    123.456.7890 - dot separator
+    123-456-7890 - dash separator
+    123 456 7890 - space separator
+    Patterns:
+    000 = [0-9]{3}
+    0000 = [0-9]{4}
+    -.  = ?[-. ]
+    """
+    regex = re.compile('^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$')
+    return regex.match(number)
+
+
 
 class ShowForm(Form):
-    artist_id = StringField(
-        'artist_id'
+   artist_id = StringField(
+        'artist_id',
+        validators = [DataRequired()]
     )
-    venue_id = StringField(
-        'venue_id'
+   venue_id = StringField(
+        'venue_id',
+        validators = [DataRequired()]
     )
-    start_time = DateTimeField(
+   start_time = DateTimeField(
         'start_time',
         validators=[DataRequired()],
         default= datetime.today()
     )
 
+
 class VenueForm(Form):
+
+    """
+    Phone validation inspired from this Github repo: https://github.com/Ikman94
+    """
+    def validate(self):
+        """Define a custom validate method in your Form:"""
+        valide_form = Form.validate(self)
+        if not valid_phone:
+            return False
+        if not valid_phone(self.phone.data):
+            self.phone.errors.append('Invalid phone number. Must be xxx-xxx-xxxx')
+            return False
+        return True
+
     name = StringField(
         'name', validators=[DataRequired()]
     )
@@ -82,11 +119,13 @@ class VenueForm(Form):
     address = StringField(
         'address', validators=[DataRequired()]
     )
+    
     phone = StringField(
         'phone'
     )
+
     image_link = StringField(
-        'image_link'
+        'image_link', validators=[DataRequired()]
     )
     genres = SelectMultipleField(
         # TODO implement enum restriction
@@ -121,7 +160,9 @@ class VenueForm(Form):
         'website_link'
     )
 
-    seeking_talent = BooleanField( 'seeking_talent' )
+    seeking_talent = BooleanField( 
+        'seeking_talent' 
+        )
 
     seeking_description = StringField(
         'seeking_description'
@@ -130,6 +171,18 @@ class VenueForm(Form):
 
 
 class ArtistForm(Form):
+
+    def validate(self):
+        """Define a custom validate method in your Form:"""
+        valide_form = Form.validate(self)
+        if not valid_phone:
+            return False
+        if not valid_phone(self.phone.data):
+            self.phone.errors.append('Invalid phone number. Must be xxx-xxx-xxxx')
+            return False
+        return True
+
+
     name = StringField(
         'name', validators=[DataRequired()]
     )
@@ -192,12 +245,13 @@ class ArtistForm(Form):
             ('WY', 'WY'),
         ]
     )
+
     phone = StringField(
-        # TODO implement validation logic for state
         'phone'
     )
+
     image_link = StringField(
-        'image_link'
+        'image_link', validators=[DataRequired()]
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired()],
@@ -237,4 +291,5 @@ class ArtistForm(Form):
     seeking_description = StringField(
             'seeking_description'
      )
+
 
